@@ -132,6 +132,13 @@ function isBinaryOperation(operation: string): boolean {
     return [ 'plus', 'sum', 'minus', 'multiply', 'mul', 'divide', 'div' ].includes(operation);
 }
 
+function getNumericFieldValue(value: any, item: any): number {
+    if (value == null || value === '') return 0;
+    if (isNumber(value)) return Number(value);
+
+    throw new TemplateDataError('Math: Unable to aggregate: Field values must be numbers: ' + audit(item));
+}
+
 function combineValues(values: number[], arrayOperation: string): number {
     if (arrayOperation === 'sum' || arrayOperation === 'plus') return sum(...values);
     if (values.length === 0) return 0;
@@ -158,10 +165,7 @@ export function aggregate(state: any): number {
         const first = getFieldValue(item, firstPath);
         const second = getFieldValue(item, secondPath);
 
-        if (!isNumber(first) || !isNumber(second))
-            throw new TemplateDataError('Math: Unable to aggregate: Field values must be numbers: ' + audit(item));
-
-        return applyBinaryOperation(Number(first), itemOperation, Number(second));
+        return applyBinaryOperation(getNumericFieldValue(first, item), itemOperation, getNumericFieldValue(second, item));
     });
 
     return combineValues(values, arrayOperation);

@@ -239,4 +239,24 @@ describe('"math" module', () => {
 
     expect(html).toBe('12');
   });
+
+  it('aggregates an empty array as zero', () => {
+    const html = getHtml({
+      modules: MODULE_NAME,
+      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
+      data: { data: { items: [] } },
+    }).trim();
+
+    expect(html).toBe('0');
+  });
+
+  it('treats empty or missing aggregate field values as zero', () => {
+    const html = getHtml({
+      modules: MODULE_NAME,
+      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
+      data: { data: { items: [ { amount: '', price: 5 }, { amount: 3 } ] } },
+    }).trim();
+
+    expect(html).toBe('0');
+  });
 });
