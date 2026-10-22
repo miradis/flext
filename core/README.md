@@ -150,6 +150,13 @@ Templates should stay declarative and focused on layout. Business logic is usual
 
 Treat templates as versioned artifacts. Prefer explicit metadata over hidden assumptions. Keep helper usage predictable and document important data paths with `@field`. Test templates with realistic data and separate document layout from application business rules.
 
+Use `math:operation` to describe an operation between two fields on each item, then `math:aggregate` to choose how to combine those results. Field paths may use dot notation:
+
+```handlebars
+{{!-- @use "math" --}}
+{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}
+```
+
 ### Limitations
 
 Flext is intentionally focused. It is not a full programming language, not a WYSIWYG editor, and not a complete document management system. Its role is to act as a reliable template core inside document generation workflows.

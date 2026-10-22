@@ -1,5 +1,5 @@
 import { defineModule, audit, isNumber, sum } from '@/lib';
-import { BaseError, TemplateSyntaxError } from '@/errors';
+import { BaseError, TemplateDataError, TemplateSyntaxError } from '@/errors';
 
 
 // Types
@@ -7,6 +7,12 @@ import { BaseError, TemplateSyntaxError } from '@/errors';
 export type Arg = string|number|null|undefined;
 
 export type FlattenFuncArg = number | number[];
+
+type MathOperation = {
+    firstPath: string,
+    secondPath: string,
+    operation: string,
+};
 
 
 // Functions
@@ -84,6 +90,81 @@ export function minus(state: any): number {
     const [ a, b ] = args;
 
     return op({ ...state, args: [ a, 'minus', b ] });
+}
+
+export function operation(state: any): MathOperation {
+    const args: any[] = state?.args ?? [];
+    const [ firstPath, secondPath, itemOperation ] = args;
+
+    if (typeof firstPath !== 'string' || typeof secondPath !== 'string' || typeof itemOperation !== 'string')
+        throw new TemplateDataError('Math: Unable to create operation: Field paths and operation must be strings');
+
+    return { firstPath, secondPath, operation: itemOperation };
+}
+
+function getFieldValue(item: any, path: string): any {
+    let value = item;
+
+    for (const part of path.split('.')) value = value?.[part];
+
+    return value;
+}
+
+function applyBinaryOperation(first: number, itemOperation: string, second: number): number {
+    switch (itemOperation) {
+        case 'plus':
+        case 'sum':
+            return first + second;
+        case 'minus':
+            return first - second;
+        case 'multiply':
+        case 'mul':
+            return first * second;
+        case 'divide':
+        case 'div':
+            return first / second;
+        default:
+            throw new TemplateSyntaxError('Math: Unknown operation: ' + audit(itemOperation));
+    }
+}
+
+function isBinaryOperation(operation: string): boolean {
+    return [ 'plus', 'sum', 'minus', 'multiply', 'mul', 'divide', 'div' ].includes(operation);
+}
+
+function combineValues(values: number[], arrayOperation: string): number {
+    if (arrayOperation === 'sum' || arrayOperation === 'plus') return sum(...values);
+    if (values.length === 0) return 0;
+
+    return values.slice(1).reduce((total, value) => applyBinaryOperation(total, arrayOperation, value), values[0]);
+}
+
+export function aggregate(state: any): number {
+    const args: any[] = state?.args ?? [];
+    const [ items, mathOperation, arrayOperation ] = args;
+
+    if (!Array.isArray(items))
+        throw new TemplateDataError('Math: Unable to aggregate: The given value is not an array: ' + audit(items));
+
+    if (!mathOperation || typeof mathOperation !== 'object' || typeof arrayOperation !== 'string')
+        throw new TemplateDataError('Math: Unable to aggregate: An item operation and array operation are required');
+
+    const { firstPath, secondPath, operation: itemOperation } = mathOperation as MathOperation;
+
+    if (!isBinaryOperation(itemOperation) || !isBinaryOperation(arrayOperation))
+        throw new TemplateSyntaxError('Math: Unknown operation: ' + audit(!isBinaryOperation(itemOperation) ? itemOperation : arrayOperation));
+
+    const values = items.map(item => {
+        const first = getFieldValue(item, firstPath);
+        const second = getFieldValue(item, secondPath);
+
+        if (!isNumber(first) || !isNumber(second))
+            throw new TemplateDataError('Math: Unable to aggregate: Field values must be numbers: ' + audit(item));
+
+        return applyBinaryOperation(Number(first), itemOperation, Number(second));
+    });
+
+    return combineValues(values, arrayOperation);
 }
 
 export function multiply(state: any): number {
@@ -170,6 +251,8 @@ export default defineModule({
         op: op,
         plus: plus,
         sum: _sum,
+        operation: operation,
+        aggregate: aggregate,
         minus: minus,
         multiply: multiply,
         mul: multiply,
