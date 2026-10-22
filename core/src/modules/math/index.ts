@@ -139,6 +139,10 @@ function getNumericFieldValue(value: any, item: any): number {
     throw new TemplateDataError('Math: Unable to aggregate: Field values must be numbers: ' + audit(item));
 }
 
+function isEmptyValue(value: any): boolean {
+    return value == null || value === '';
+}
+
 function combineValues(values: number[], arrayOperation: string): number {
     if (arrayOperation === 'sum' || arrayOperation === 'plus') return sum(...values);
     if (values.length === 0) return 0;
@@ -148,7 +152,8 @@ function combineValues(values: number[], arrayOperation: string): number {
 
 export function aggregate(state: any): number {
     const args: any[] = state?.args ?? [];
-    const [ items, mathOperation, arrayOperation ] = args;
+    const [ inputItems, mathOperation, arrayOperation ] = args;
+    const items = inputItems ?? [];
 
     if (!Array.isArray(items))
         throw new TemplateDataError('Math: Unable to aggregate: The given value is not an array: ' + audit(items));
@@ -161,11 +166,13 @@ export function aggregate(state: any): number {
     if (!isBinaryOperation(itemOperation) || !isBinaryOperation(arrayOperation))
         throw new TemplateSyntaxError('Math: Unknown operation: ' + audit(!isBinaryOperation(itemOperation) ? itemOperation : arrayOperation));
 
-    const values = items.map(item => {
+    const values = items.flatMap(item => {
         const first = getFieldValue(item, firstPath);
         const second = getFieldValue(item, secondPath);
 
-        return applyBinaryOperation(getNumericFieldValue(first, item), itemOperation, getNumericFieldValue(second, item));
+        if (isEmptyValue(first) && isEmptyValue(second)) return [];
+
+        return [ applyBinaryOperation(getNumericFieldValue(first, item), itemOperation, getNumericFieldValue(second, item)) ];
     });
 
     return combineValues(values, arrayOperation);

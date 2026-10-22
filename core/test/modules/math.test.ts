@@ -250,6 +250,16 @@ describe('"math" module', () => {
     expect(html).toBe('0');
   });
 
+  it('aggregates a missing array as zero', () => {
+    const html = getHtml({
+      modules: MODULE_NAME,
+      template: '{{math:aggregate data.payments (math:operation "amount" "price" "multiply") "sum"}}',
+      data: { data: {} },
+    }).trim();
+
+    expect(html).toBe('0');
+  });
+
   it('treats empty or missing aggregate field values as zero', () => {
     const html = getHtml({
       modules: MODULE_NAME,
@@ -258,5 +268,15 @@ describe('"math" module', () => {
     }).trim();
 
     expect(html).toBe('0');
+  });
+
+  it('skips aggregate rows with no operation field values', () => {
+    const html = getHtml({
+      modules: MODULE_NAME,
+      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
+      data: { data: { items: [ {}, { amount: 2, price: 5 } ] } },
+    }).trim();
+
+    expect(html).toBe('10');
   });
 });
