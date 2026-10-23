@@ -37,7 +37,7 @@ export function op(state: any): any {
             for (const item of items)
                 cursor = hasFallback ? cursor?.[item] : cursor[item];
 
-            if (cursor == null && hasFallback)
+            if (cursor === undefined && hasFallback)
                 cursor = fallback;
 
             result.push(cursor);
