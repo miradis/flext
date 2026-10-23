@@ -73,6 +73,16 @@ describe('"array" module', () => {
     expect(html).toBe('Anna;Boris;');
   });
 
+  it('destruct returns an empty array when the source is missing', () => {
+    const html = getHtml({
+      modules: [ MODULE_NAME, 'math' ],
+      template: '{{math:sum (math:mul (array:destruct data.payments "amount") (array:destruct data.payments "price"))}}',
+      data: { data: {} },
+    }).trim();
+
+    expect(html).toBe('0');
+  });
+
   it('reverse returns a reversed array without mutating the original data', () => {
     const html = getHtml({
       modules: MODULE_NAME,

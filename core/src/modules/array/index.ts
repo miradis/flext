@@ -17,6 +17,9 @@ export function op(state: any): any[] | string | number | boolean | null {
     if (op === 'check')
         return Array.isArray(arr);
 
+    if (op === 'destruct' && arr == null)
+        return [];
+
     if (!Array.isArray(arr))
         throw new TemplateDataError(`Array: Unable to perform '${op}': The given value is not an array: ${audit(arr)}`);
 
