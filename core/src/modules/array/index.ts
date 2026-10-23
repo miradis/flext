@@ -17,7 +17,7 @@ export function op(state: any): any[] | string | number | boolean | null {
     if (op === 'check')
         return Array.isArray(arr);
 
-    if (op === 'destruct' && arr == null)
+    if (op === 'destruct' && arr == null && arr === undefined)
         return [];
 
     if (!Array.isArray(arr))

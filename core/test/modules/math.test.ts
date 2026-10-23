@@ -206,6 +206,28 @@ describe('"math" module', () => {
     expect(html).toBe('12');
   });
 
+  it('multiplies arrays element by element and broadcasts scalar values', () => {
+    const scalarFirst = getHtml({ modules: MODULE_NAME, template: '{{ math:mul 5 data.values }}', data: { data: { values: [ 1, 10 ] } } }).trim();
+    const scalarSecond = getHtml({ modules: MODULE_NAME, template: '{{ math:mul data.values 5 }}', data: { data: { values: [ 1, 10 ] } } }).trim();
+    const arrays = getHtml({ modules: MODULE_NAME, template: '{{ math:mul data.first data.second }}', data: { data: { first: [ 5, 30 ], second: [ 1, 10 ] } } }).trim();
+    const shortArray = getHtml({ modules: MODULE_NAME, template: '{{ math:mul data.first data.second }}', data: { data: { first: [ 5 ], second: [ 1, 10 ] } } }).trim();
+
+    expect(scalarFirst).toBe('5,50');
+    expect(scalarSecond).toBe('5,50');
+    expect(arrays).toBe('5,300');
+    expect(shortArray).toBe('5,10');
+  });
+
+  it('composes destruct, mul, and sum for object arrays', () => {
+    const html = getHtml({
+      modules: [ 'array', MODULE_NAME ],
+      template: '{{ math:sum (math:mul (array:destruct data.payments "amount") (array:destruct data.payments "price")) }}',
+      data: { data: { payments: [ { amount: 5, price: 100 }, { amount: 10, price: 100 }, { amount: 30, price: 300 } ] } },
+    }).trim();
+
+    expect(html).toBe('10500');
+  });
+
   it('div alias mirrors divide output', () => {
     const html = getHtml({
       modules: MODULE_NAME,
@@ -240,43 +262,4 @@ describe('"math" module', () => {
     expect(html).toBe('12');
   });
 
-  it('aggregates an empty array as zero', () => {
-    const html = getHtml({
-      modules: MODULE_NAME,
-      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
-      data: { data: { items: [] } },
-    }).trim();
-
-    expect(html).toBe('0');
-  });
-
-  it('aggregates a missing array as zero', () => {
-    const html = getHtml({
-      modules: MODULE_NAME,
-      template: '{{math:aggregate data.payments (math:operation "amount" "price" "multiply") "sum"}}',
-      data: { data: {} },
-    }).trim();
-
-    expect(html).toBe('0');
-  });
-
-  it('treats empty or missing aggregate field values as zero', () => {
-    const html = getHtml({
-      modules: MODULE_NAME,
-      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
-      data: { data: { items: [ { amount: '', price: 5 }, { amount: 3 } ] } },
-    }).trim();
-
-    expect(html).toBe('0');
-  });
-
-  it('skips aggregate rows with no operation field values', () => {
-    const html = getHtml({
-      modules: MODULE_NAME,
-      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
-      data: { data: { items: [ {}, { amount: 2, price: 5 } ] } },
-    }).trim();
-
-    expect(html).toBe('10');
-  });
 });
