@@ -73,11 +73,11 @@ describe('"array" module', () => {
     expect(html).toBe('Anna;Boris;');
   });
 
-  it('destruct uses a fallback for a missing source or property value', () => {
-    const missingSource = getHtml({
+  it('destruct preserves undefined values and applies fallback to missing properties', () => {
+    const missingUndefined = getHtml({
       modules: MODULE_NAME,
-      template: '{{array:destruct data.missing "value" fallback=0}}',
-      data: { data: {} },
+      template: '{{array:length (array:destruct data.items "value")}}|{{#each (array:destruct data.items "value")}}x{{/each}}',
+      data: { data: { items: [ {} ] } },
     }).trim();
     const missingProperty = getHtml({
       modules: MODULE_NAME,
@@ -85,7 +85,7 @@ describe('"array" module', () => {
       data: { data: { items: [ { value: 5 }, {} ] } },
     }).trim();
 
-    expect(missingSource).toBe('0');
+    expect(missingUndefined).toBe('1|x');
     expect(missingProperty).toBe('5,0');
   });
 

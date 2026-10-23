@@ -157,7 +157,7 @@ Use `array:destruct` to extract object properties into arrays, `math:mul` to mul
 {{math:sum (math:mul (array:destruct data.payments "amount") (array:destruct data.payments "price"))}}
 ```
 
-Use `fallback` when the source array or an extracted property may be missing. The fallback can be a number, string, array, or another value:
+Use `fallback` when an extracted property may be missing. The source must still be an array. The fallback can be a number, string, array, or another value:
 
 ```handlebars
 {{math:sum (math:mul (array:destruct data.payments "amount" fallback=0) (array:destruct data.payments "price" fallback=0))}}
