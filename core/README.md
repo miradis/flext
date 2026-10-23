@@ -157,6 +157,14 @@ Use `array:destruct` to extract object properties into arrays, `math:mul` to mul
 {{math:sum (math:mul (array:destruct data.payments "amount") (array:destruct data.payments "price"))}}
 ```
 
+Use `fallback` when the source array or an extracted property may be missing. The fallback can be a number, string, array, or another value:
+
+```handlebars
+{{math:sum (math:mul (array:destruct data.payments "amount" fallback=0) (array:destruct data.payments "price" fallback=0))}}
+```
+
+If `math:mul` receives `undefined` without a fallback, it returns `NaN`; `math:sum` propagates that value without throwing.
+
 ### Limitations
 
 Flext is intentionally focused. It is not a full programming language, not a WYSIWYG editor, and not a complete document management system. Its role is to act as a reliable template core inside document generation workflows.

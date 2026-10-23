@@ -73,6 +73,22 @@ describe('"array" module', () => {
     expect(html).toBe('Anna;Boris;');
   });
 
+  it('destruct uses a fallback for a missing source or property value', () => {
+    const missingSource = getHtml({
+      modules: MODULE_NAME,
+      template: '{{array:destruct data.missing "value" fallback=0}}',
+      data: { data: {} },
+    }).trim();
+    const missingProperty = getHtml({
+      modules: MODULE_NAME,
+      template: '{{array:destruct data.items "value" fallback=0}}',
+      data: { data: { items: [ { value: 5 }, {} ] } },
+    }).trim();
+
+    expect(missingSource).toBe('0');
+    expect(missingProperty).toBe('5,0');
+  });
+
   it('reverse returns a reversed array without mutating the original data', () => {
     const html = getHtml({
       modules: MODULE_NAME,

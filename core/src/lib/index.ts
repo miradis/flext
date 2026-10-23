@@ -738,16 +738,16 @@ export function sum(...args: number[]): number {
     return args.reduce((acc, val) => Number(acc) + Number(val), 0);
 }
 
-export function mul(...args: (number | number[])[]): number | number[] {
+export function mul(...args: (number | number[] | undefined)[]): number | number[] {
     const arrays = args.filter(Array.isArray) as number[][];
 
     if (arrays.length === 0)
-        return args.reduce((acc, val) => acc * Number(val), 1);
+        return args.reduce<number>((acc, val) => acc * Number(val), 1);
 
     const length = Math.max(...arrays.map(arr => arr.length));
 
-    return Array.from({ length }, (_, index) => args.reduce((acc, val) => {
-        const factor = Array.isArray(val) ? val[index] ?? 1 : val;
+    return Array.from({ length }, (_, index) => args.reduce<number>((acc, val) => {
+        const factor = Array.isArray(val) ? index < val.length ? val[index] : 1 : val;
         return acc * Number(factor);
     }, 1));
 }

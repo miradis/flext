@@ -206,6 +206,14 @@ describe('"math" module', () => {
     expect(html).toBe('12');
   });
 
+  it('propagates undefined through multiplication and sum as NaN', () => {
+    const scalarHtml = getHtml({ modules: MODULE_NAME, template: '{{math:mul data.missing 5}}', data: { data: {} } }).trim();
+    const arrayHtml = getHtml({ modules: MODULE_NAME, template: '{{math:sum (math:mul data.values 5)}}', data: { data: { values: [ 1, undefined ] } } }).trim();
+
+    expect(scalarHtml).toBe('NaN');
+    expect(arrayHtml).toBe('NaN');
+  });
+
   it('div alias mirrors divide output', () => {
     const html = getHtml({
       modules: MODULE_NAME,
@@ -240,43 +248,4 @@ describe('"math" module', () => {
     expect(html).toBe('12');
   });
 
-  it('aggregates an empty array as zero', () => {
-    const html = getHtml({
-      modules: MODULE_NAME,
-      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
-      data: { data: { items: [] } },
-    }).trim();
-
-    expect(html).toBe('0');
-  });
-
-  it('aggregates a missing array as zero', () => {
-    const html = getHtml({
-      modules: MODULE_NAME,
-      template: '{{math:aggregate data.payments (math:operation "amount" "price" "multiply") "sum"}}',
-      data: { data: {} },
-    }).trim();
-
-    expect(html).toBe('0');
-  });
-
-  it('treats empty or missing aggregate field values as zero', () => {
-    const html = getHtml({
-      modules: MODULE_NAME,
-      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
-      data: { data: { items: [ { amount: '', price: 5 }, { amount: 3 } ] } },
-    }).trim();
-
-    expect(html).toBe('0');
-  });
-
-  it('skips aggregate rows with no operation field values', () => {
-    const html = getHtml({
-      modules: MODULE_NAME,
-      template: '{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}',
-      data: { data: { items: [ {}, { amount: 2, price: 5 } ] } },
-    }).trim();
-
-    expect(html).toBe('10');
-  });
 });

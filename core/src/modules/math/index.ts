@@ -29,11 +29,12 @@ export function op(state: any): number | number[] {
 
     const flatten = (..._args: FlattenFuncArg[] | any[]): number[] => {
         const result: number[] = [];
+        const isMathNumber = (val: any): boolean => typeof val === 'number' || isNumber(val);
 
         for (const arg of _args) {
-            if (isNumber(arg))
-                result.push(arg);
-            else if (Array.isArray(arg) && arg.every(isNumber))
+            if (isMathNumber(arg))
+                result.push(Number(arg));
+            else if (Array.isArray(arg) && arg.every(isMathNumber))
                 result.push(...arg);
             else
                 throw new BaseError('Math: Unable to sum: The given arguments are not numbers: ' + audit(_args));
@@ -53,7 +54,7 @@ export function op(state: any): number | number[] {
             return Number(a) - Number(b || 0);
         case 'multiply':
         case 'mul':
-            return multiplyValues(a as number | number[], (b ?? 1) as number | number[]);
+            return multiplyValues(a as number | number[] | undefined, b as number | number[] | undefined);
         case 'divide':
             return Number(a) / Number(b || 1);
         case 'intDivide':
