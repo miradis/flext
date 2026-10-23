@@ -5,17 +5,21 @@ import { TemplateDataError } from '@/errors';
 
 // Functions
 
-export function op(state: any): any[] | string | number | boolean | null {
+export function op(state: any): any {
     const args: any[] = state?.args ?? [];
     const namedArgs: Obj = state?.namedArgs ?? {};
     const [ op, arr, arg, ...rest ] = args;
-    const { separator = ' ', strict, all, start, end } = namedArgs;
+    const { separator = ' ', strict, all, start, end, fallback } = namedArgs;
+    const hasFallback = Object.prototype.hasOwnProperty.call(namedArgs, 'fallback');
 
 
     // Doing some checks
 
     if (op === 'check')
         return Array.isArray(arr);
+
+    if (op === 'destruct' && arr == null)
+        return hasFallback ? fallback : [];
 
     if (!Array.isArray(arr))
         throw new TemplateDataError(`Array: Unable to perform '${op}': The given value is not an array: ${audit(arr)}`);
@@ -33,7 +37,11 @@ export function op(state: any): any[] | string | number | boolean | null {
         for (const obj of val) {
             let cursor: any = obj;
 
-            for (const item of items) cursor = cursor[item];
+            for (const item of items)
+                cursor = hasFallback ? cursor?.[item] : cursor[item];
+
+            if (cursor == null && hasFallback)
+                cursor = fallback;
 
             result.push(cursor);
         }
@@ -127,7 +135,7 @@ export function string(state: any): string {
     return op({ ...state, args: [ 'string', arr ] }) as string;
 }
 
-export function destruct(state: any): any[] {
+export function destruct(state: any): any {
     const args: any[] = state?.args ?? [];
     const [ arr, prop ] = args;
 
