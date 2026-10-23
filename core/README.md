@@ -150,11 +150,11 @@ Templates should stay declarative and focused on layout. Business logic is usual
 
 Treat templates as versioned artifacts. Prefer explicit metadata over hidden assumptions. Keep helper usage predictable and document important data paths with `@field`. Test templates with realistic data and separate document layout from application business rules.
 
-Use `math:operation` to describe an operation between two fields on each item, then `math:aggregate` to choose how to combine those results. Field paths may use dot notation:
+Use `array:destruct` to extract object properties into arrays, `math:mul` to multiply corresponding values, and `math:sum` to add the results:
 
 ```handlebars
-{{!-- @use "math" --}}
-{{math:aggregate data.items (math:operation "amount" "price" "multiply") "sum"}}
+{{!-- @use "array" "math" --}}
+{{math:sum (math:mul (array:destruct data.payments "amount") (array:destruct data.payments "price"))}}
 ```
 
 ### Limitations

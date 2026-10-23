@@ -1,5 +1,5 @@
-import { defineModule, audit, isNumber, sum } from '@/lib';
-import { BaseError, TemplateDataError, TemplateSyntaxError } from '@/errors';
+import { defineModule, audit, isNumber, sum, mul as multiplyValues } from '@/lib';
+import { BaseError, TemplateSyntaxError } from '@/errors';
 
 
 // Types
@@ -8,16 +8,9 @@ export type Arg = string|number|null|undefined;
 
 export type FlattenFuncArg = number | number[];
 
-type MathOperation = {
-    firstPath: string,
-    secondPath: string,
-    operation: string,
-};
-
-
 // Functions
 
-export function op(state: any): number {
+export function op(state: any): number | number[] {
     const args: Arg[] = state?.args ?? [];
     const [ a, op, b, ...rest ] = args;
 
@@ -59,7 +52,8 @@ export function op(state: any): number {
         case 'minus':
             return Number(a) - Number(b || 0);
         case 'multiply':
-            return Number(a) * Number(b || 1);
+        case 'mul':
+            return multiplyValues(a as number | number[], (b ?? 1) as number | number[]);
         case 'divide':
             return Number(a) / Number(b || 1);
         case 'intDivide':
@@ -75,135 +69,49 @@ export function plus(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a, b, ...rest ] = args;
 
-    return op({ ...state, args: [ a, 'plus', b, ...rest ] });
+    return op({ ...state, args: [ a, 'plus', b, ...rest ] }) as number;
 }
 
 export function _sum(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a, b, ...rest ] = args;
 
-    return op({ ...state, args: [ a, 'sum', b, ...rest ] });
+    return op({ ...state, args: [ a, 'sum', b, ...rest ] }) as number;
 }
 
 export function minus(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a, b ] = args;
 
-    return op({ ...state, args: [ a, 'minus', b ] });
+    return op({ ...state, args: [ a, 'minus', b ] }) as number;
 }
 
-export function operation(state: any): MathOperation {
-    const args: any[] = state?.args ?? [];
-    const [ firstPath, secondPath, itemOperation ] = args;
-
-    if (typeof firstPath !== 'string' || typeof secondPath !== 'string' || typeof itemOperation !== 'string')
-        throw new TemplateDataError('Math: Unable to create operation: Field paths and operation must be strings');
-
-    return { firstPath, secondPath, operation: itemOperation };
-}
-
-function getFieldValue(item: any, path: string): any {
-    let value = item;
-
-    for (const part of path.split('.')) value = value?.[part];
-
-    return value;
-}
-
-function applyBinaryOperation(first: number, itemOperation: string, second: number): number {
-    switch (itemOperation) {
-        case 'plus':
-        case 'sum':
-            return first + second;
-        case 'minus':
-            return first - second;
-        case 'multiply':
-        case 'mul':
-            return first * second;
-        case 'divide':
-        case 'div':
-            return first / second;
-        default:
-            throw new TemplateSyntaxError('Math: Unknown operation: ' + audit(itemOperation));
-    }
-}
-
-function isBinaryOperation(operation: string): boolean {
-    return [ 'plus', 'sum', 'minus', 'multiply', 'mul', 'divide', 'div' ].includes(operation);
-}
-
-function getNumericFieldValue(value: any, item: any): number {
-    if (value == null || value === '') return 0;
-    if (isNumber(value)) return Number(value);
-
-    throw new TemplateDataError('Math: Unable to aggregate: Field values must be numbers: ' + audit(item));
-}
-
-function isEmptyValue(value: any): boolean {
-    return value == null || value === '';
-}
-
-function combineValues(values: number[], arrayOperation: string): number {
-    if (arrayOperation === 'sum' || arrayOperation === 'plus') return sum(...values);
-    if (values.length === 0) return 0;
-
-    return values.slice(1).reduce((total, value) => applyBinaryOperation(total, arrayOperation, value), values[0]);
-}
-
-export function aggregate(state: any): number {
-    const args: any[] = state?.args ?? [];
-    const [ inputItems, mathOperation, arrayOperation ] = args;
-    const items = inputItems ?? [];
-
-    if (!Array.isArray(items))
-        throw new TemplateDataError('Math: Unable to aggregate: The given value is not an array: ' + audit(items));
-
-    if (!mathOperation || typeof mathOperation !== 'object' || typeof arrayOperation !== 'string')
-        throw new TemplateDataError('Math: Unable to aggregate: An item operation and array operation are required');
-
-    const { firstPath, secondPath, operation: itemOperation } = mathOperation as MathOperation;
-
-    if (!isBinaryOperation(itemOperation) || !isBinaryOperation(arrayOperation))
-        throw new TemplateSyntaxError('Math: Unknown operation: ' + audit(!isBinaryOperation(itemOperation) ? itemOperation : arrayOperation));
-
-    const values = items.flatMap(item => {
-        const first = getFieldValue(item, firstPath);
-        const second = getFieldValue(item, secondPath);
-
-        if (isEmptyValue(first) && isEmptyValue(second)) return [];
-
-        return [ applyBinaryOperation(getNumericFieldValue(first, item), itemOperation, getNumericFieldValue(second, item)) ];
-    });
-
-    return combineValues(values, arrayOperation);
-}
-
-export function multiply(state: any): number {
+export function multiply(state: any): number | number[] {
     const args: Arg[] = state?.args ?? [];
     const [ a, b ] = args;
 
-    return op({ ...state, args: [ a, 'multiply', b ] });
+    return op({ ...state, args: [ a, 'mul', b ] });
 }
 
 export function divide(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a, b ] = args;
 
-    return op({ ...state, args: [ a, 'divide', b ] });
+    return op({ ...state, args: [ a, 'divide', b ] }) as number;
 }
 
 export function intDivide(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a, b ] = args;
 
-    return op({ ...state, args: [ a, 'intDivide', b ] });
+    return op({ ...state, args: [ a, 'intDivide', b ] }) as number;
 }
 
 export function power(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a, b ] = args;
 
-    return op({ ...state, args: [ a, 'power', b ] });
+    return op({ ...state, args: [ a, 'power', b ] }) as number;
 }
 
 export function round(state: any): number {
@@ -213,7 +121,7 @@ export function round(state: any): number {
 
     // Defining the function
 
-    const handle = (__op: string, val: Arg): number => op({ ...state, args: [ __op, val ] });
+    const handle = (__op: string, val: Arg): number => op({ ...state, args: [ __op, val ] }) as number;
 
 
     // If the operation is not defined
@@ -239,21 +147,21 @@ export function sqrt(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a ] = args;
 
-    return op({ ...state, args: [ 'sqrt', a ] });
+    return op({ ...state, args: [ 'sqrt', a ] }) as number;
 }
 
 export function cbrt(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a ] = args;
 
-    return op({ ...state, args: [ 'cbrt', a ] });
+    return op({ ...state, args: [ 'cbrt', a ] }) as number;
 }
 
 export function abs(state: any): number {
     const args: Arg[] = state?.args ?? [];
     const [ a ] = args;
 
-    return op({ ...state, args: [ 'abs', a ] });
+    return op({ ...state, args: [ 'abs', a ] }) as number;
 }
 
 
@@ -262,8 +170,6 @@ export default defineModule({
         op: op,
         plus: plus,
         sum: _sum,
-        operation: operation,
-        aggregate: aggregate,
         minus: minus,
         multiply: multiply,
         mul: multiply,
