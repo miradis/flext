@@ -18,9 +18,6 @@ export function op(state: any): any {
     if (op === 'check')
         return Array.isArray(arr);
 
-    if (op === 'destruct' && arr == null)
-        return hasFallback ? fallback : [];
-
     if (!Array.isArray(arr))
         throw new TemplateDataError(`Array: Unable to perform '${op}': The given value is not an array: ${audit(arr)}`);
 
